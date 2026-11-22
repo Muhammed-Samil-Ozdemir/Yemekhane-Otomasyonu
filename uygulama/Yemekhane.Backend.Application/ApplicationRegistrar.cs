@@ -18,6 +18,7 @@ public static class ApplicationRegistrar
         services.AddSingleton(mapsterConfig);
 
         services.AddScoped<MenuReader>();
+        services.AddScoped<MenuCacheInvalidator>();
 
         return services;
     }

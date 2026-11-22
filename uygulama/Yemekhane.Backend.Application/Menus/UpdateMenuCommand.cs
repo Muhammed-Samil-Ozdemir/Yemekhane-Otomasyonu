@@ -15,7 +15,8 @@ public sealed record UpdateMenuCommand(
     List<int> FoodIds) : IRequest<Result<string>>;
 
 internal sealed class UpdateMenuCommandHandler(
-    IMenuRepository menuRepository) : IRequestHandler<UpdateMenuCommand, Result<string>>
+    IMenuRepository menuRepository,
+    MenuCacheInvalidator menuCacheInvalidator) : IRequestHandler<UpdateMenuCommand, Result<string>>
 {
     public async Task<Result<string>> Handle(UpdateMenuCommand request, CancellationToken cancellationToken)
     {
@@ -23,7 +24,10 @@ internal sealed class UpdateMenuCommandHandler(
         if (errors.Length > 0)
             return Result<string>.BadRequest(errors);
 
-        await menuRepository.UpdateAsync(request.Adapt<MenuDefinition>(), cancellationToken);
+        var menu = request.Adapt<MenuDefinition>();
+        var previousMenu = await menuRepository.UpdateAsync(menu, cancellationToken);
+
+        await menuCacheInvalidator.InvalidateAsync([previousMenu, menu], cancellationToken);
 
         return Result<string>.Success("Menü güncellendi.");
     }

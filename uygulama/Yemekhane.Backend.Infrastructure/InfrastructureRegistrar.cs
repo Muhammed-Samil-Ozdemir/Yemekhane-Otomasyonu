@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 using Yemekhane.Backend.Application.Auth;
+using Yemekhane.Backend.Application.Cache;
 using Yemekhane.Backend.Domain.Balances;
 using Yemekhane.Backend.Domain.Cafeterias;
 using Yemekhane.Backend.Domain.Evaluations;
@@ -11,6 +13,7 @@ using Yemekhane.Backend.Domain.Reservations;
 using Yemekhane.Backend.Domain.Users;
 using Yemekhane.Backend.Infrastructure.Auth;
 using Yemekhane.Backend.Infrastructure.Balances;
+using Yemekhane.Backend.Infrastructure.Cache;
 using Yemekhane.Backend.Infrastructure.Cafeterias;
 using Yemekhane.Backend.Infrastructure.Data;
 using Yemekhane.Backend.Infrastructure.Evaluations;
@@ -30,9 +33,14 @@ public static class InfrastructureRegistrar
     {
         services.Configure<DatabaseOption>(configuration);
         services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
+        services.AddSingleton<ReplicaSynchronizer>();
 
-        services.AddMemoryCache();
-        services.AddSingleton<ISessionService, MemorySessionService>();
+        var redisOption = configuration.Get<RedisOption>() ?? new RedisOption();
+        services.AddSingleton<IConnectionMultiplexer>(_ =>
+            ConnectionMultiplexer.Connect(redisOption.ConnectionString));
+
+        services.AddSingleton<ICacheService, RedisCacheService>();
+        services.AddSingleton<ISessionService, RedisSessionService>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
         services.AddScoped<IUserRepository, UserRepository>();

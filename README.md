@@ -241,3 +241,10 @@ Arayüz `frontend/` altında düz HTML5, CSS3 ve JavaScript (`fetch`) ile yazıl
 | `GET`, `POST`, `PUT` | `/api/admin/menus`, `/api/admin/foods`, `/api/admin/turnstile` | Yönetici raporu, menü oluşturma/düzenleme, `sp_turnike_gecis` | Replika / Kaynak |
 
 Docker dışında çalıştırmak için (veritabanları compose ile açıkken) `cd uygulama && dotnet run --project Yemekhane.Backend.WebAPI`; `appsettings.Development.json` `localhost:3307` ve `localhost:3308` portlarını kullanır.
+
+### Redis anahtarları
+
+| Anahtar | İçerik | Süre | Silinme |
+|---|---|---|---|
+| `menu:{yemekhane_id}:{tarih}:{ogun_id}` | Menünün yemekleri, fiyatları, son saati (JSON) | Menünün gününün sonuna kadar | Yönetici menüyü oluşturduğunda ya da değiştirdiğinde |
+| `oturum:{token}` | Oturum sahibinin kimliği ve rolü (JSON) | 30 dakika, her istekte yenilenir | Çıkışta |

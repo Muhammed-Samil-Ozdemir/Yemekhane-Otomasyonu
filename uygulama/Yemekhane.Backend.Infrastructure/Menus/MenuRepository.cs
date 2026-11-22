@@ -8,7 +8,8 @@ using Yemekhane.Backend.Infrastructure.Data;
 namespace Yemekhane.Backend.Infrastructure.Menus;
 
 public sealed class MenuRepository(
-    IDbConnectionFactory connectionFactory) : IMenuRepository
+    IDbConnectionFactory connectionFactory,
+    ReplicaSynchronizer replicaSynchronizer) : IMenuRepository
 {
     public async Task<Menu?> GetAsync(int cafeteriaId, DateTime date, int mealId, CancellationToken cancellationToken)
     {
@@ -171,23 +172,27 @@ public sealed class MenuRepository(
         await using var connection = await connectionFactory.OpenPrimaryAsync(cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
+        int menuId;
+
         try
         {
-            var menuId = await connection.ExecuteScalarAsync<int>(new CommandDefinition(
+            menuId = await connection.ExecuteScalarAsync<int>(new CommandDefinition(
                 sql, menu, transaction, cancellationToken: cancellationToken));
 
             await InsertFoodsAsync(connection, transaction, menuId, menu.FoodIds, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
-
-            return menuId;
         }
         catch (MySqlException exception) when (IsKnownWriteError(exception))
         {
             throw ToBusinessRuleException(exception);
         }
+
+        await replicaSynchronizer.WaitAsync(connection, cancellationToken);
+
+        return menuId;
     }
 
-    public async Task UpdateAsync(MenuDefinition menu, CancellationToken cancellationToken)
+    public async Task<MenuDefinition> UpdateAsync(MenuDefinition menu, CancellationToken cancellationToken)
     {
         const string currentSql = """
             SELECT id           AS Id,
@@ -251,6 +256,10 @@ public sealed class MenuRepository(
         {
             throw ToBusinessRuleException(exception);
         }
+
+        await replicaSynchronizer.WaitAsync(connection, cancellationToken);
+
+        return current;
     }
 
     private static Task InsertFoodsAsync(

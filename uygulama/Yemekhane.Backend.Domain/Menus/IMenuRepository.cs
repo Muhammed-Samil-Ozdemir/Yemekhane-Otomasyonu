@@ -12,5 +12,5 @@ public interface IMenuRepository
 
     Task<int> CreateAsync(MenuDefinition menu, CancellationToken cancellationToken);
 
-    Task UpdateAsync(MenuDefinition menu, CancellationToken cancellationToken);
+    Task<MenuDefinition> UpdateAsync(MenuDefinition menu, CancellationToken cancellationToken);
 }

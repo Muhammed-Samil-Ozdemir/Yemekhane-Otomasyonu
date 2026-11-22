@@ -117,3 +117,64 @@ Sırasıyla `ReservationController` → `CreateReservationCommandHandler` → `R
 ![Rezervasyon sonrası kaynaktan gelen bakiye](ekran/asama2-haftalik.png)
 
 ![Telefon genişliği (400 px)](ekran/asama2-mobil-menu.png)
+
+## Aşama 3 · Redis
+
+| Görev | Anahtar | Süre | Silinme |
+|---|---|---|---|
+| Menü önbelleği | `menu:{yemekhane_id}:{tarih}:{ogun_id}` | Menünün gününün sonuna kadar | Yönetici menüyü oluşturduğunda ya da değiştirdiğinde |
+| Oturum | `oturum:{token}` | 30 dakika, her istekte `GETEX` ile yenilenir | Çıkışta |
+
+Bağlantı `REDIS_HOST` ve `REDIS_PORT` değişkenlerinden kurulur. Önbellekte kullanıcıdan bağımsız menü içeriği durur; rol fiyatı, boş yer ve kullanıcının rezervasyon durumu her istekte ayrıca hesaplanır.
+
+**İlk istek veritabanından, ikincisi Redis'ten geliyor**
+
+```
+$ docker compose logs uygulama | grep Menü
+23:54:34 info: ...MenuReader[0] Menü veritabanından (replika) okundu ve önbelleğe yazıldı: menu:1:2026-11-23:2
+23:54:35 info: ...MenuReader[0] Menü Redis önbelleğinden okundu: menu:1:2026-11-23:2
+
+$ docker compose exec redis redis-cli TTL menu:1:2026-11-23:2
+86717
+$ docker compose exec redis redis-cli GET menu:1:2026-11-23:2
+{"CafeteriaId":1,"CafeteriaName":"Merkez Yemekhane","Date":"2026-11-23T00:00:00","MealId":2,"MealName":"Öğle", ...}
+```
+
+**Menü güncellenince eski kayıt siliniyor, arayüz yeni menüyü gösteriyor**
+
+```
+$ docker compose exec redis redis-cli EXISTS menu:1:2026-11-23:2
+(integer) 1
+$ curl -b yonetici.txt -X PUT -H "Content-Type: application/json" \
+    -d '{"cafeteriaId":1,"date":"2026-11-23","mealId":2,"studentPrice":42,"staffPrice":90,"foodIds":[6,11,25,31]}' \
+    http://localhost:8080/api/admin/menus/50
+{"data":"Menü güncellendi.","isSuccess":true,"errorMessages":[],"status":200}
+$ docker compose exec redis redis-cli EXISTS menu:1:2026-11-23:2
+(integer) 0
+
+23:55:02 info: ...ReplicaSynchronizer[0] Replika değişikliği uyguladı, önbellek güvenle silinebilir.
+23:55:02 info: ...MenuCacheInvalidator[0] Menü değişti, önbellek kaydı silindi: menu:1:2026-11-23:2
+23:55:03 info: ...MenuReader[0] Menü veritabanından (replika) okundu ve önbelleğe yazıldı: menu:1:2026-11-23:2
+```
+
+Öğrenci menüyü yeniden açtığında yeni hali gördü (42 TL, Çoban Salata yerine Cacık). Önbellek replikadan doldurulduğu için silme işlemi replika değişikliği uyguladıktan sonra yapılır: `ReplicaSynchronizer` kaynağın `@@GLOBAL.gtid_executed` değerini alıp replikada `WAIT_FOR_EXECUTED_GTID_SET` ile bekler. Aksi halde silmeden hemen sonra gelen istek replikadan eski menüyü okuyup gün sonuna kadar önbelleğe yazabilirdi.
+
+**Uygulama container'ı yeniden başlasa da oturum düşmüyor**
+
+```
+$ docker compose exec redis redis-cli GET oturum:7520bd51...
+{"UserId":2,"FullName":"Murat Kaya","Email":"murat.kaya@kampus.edu.tr","Role":"personel"}
+$ docker compose exec redis redis-cli TTL oturum:7520bd51...
+1797   (6 saniye sonra 1791, bir istekten sonra 1799)
+
+$ docker compose restart uygulama
+$ curl -b cerez.txt http://localhost:8080/api/auth/me
+{"data":{"id":2,"fullName":"Murat Kaya", ...},"isSuccess":true, ...}
+
+$ curl -X POST -b cerez.txt http://localhost:8080/api/auth/logout
+{"data":"Çıkış yapıldı.","isSuccess":true,"errorMessages":[],"status":200}
+$ docker compose exec redis redis-cli EXISTS oturum:7520bd51...
+(integer) 0
+```
+
+Tarayıcı yalnızca rastgele 64 karakterlik token'ı `HttpOnly` bir çerezde tutar, kullanıcı bilgisi Redis'tedir. Aşama 2'de oturumlar uygulamanın belleğindeydi ve aynı `restart` herkesi çıkışa zorluyordu; değişiklik yalnızca Infrastructure'daki `ISessionService` kaydını `RedisSessionService` yapmaktan ibaret oldu.

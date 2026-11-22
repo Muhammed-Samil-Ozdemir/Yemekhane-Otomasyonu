@@ -14,7 +14,8 @@ public sealed record CreateMenuCommand(
     List<int> FoodIds) : IRequest<Result<int>>;
 
 internal sealed class CreateMenuCommandHandler(
-    IMenuRepository menuRepository) : IRequestHandler<CreateMenuCommand, Result<int>>
+    IMenuRepository menuRepository,
+    MenuCacheInvalidator menuCacheInvalidator) : IRequestHandler<CreateMenuCommand, Result<int>>
 {
     public async Task<Result<int>> Handle(CreateMenuCommand request, CancellationToken cancellationToken)
     {
@@ -22,7 +23,10 @@ internal sealed class CreateMenuCommandHandler(
         if (errors.Length > 0)
             return Result<int>.BadRequest(errors);
 
-        var menuId = await menuRepository.CreateAsync(request.Adapt<MenuDefinition>(), cancellationToken);
+        var menu = request.Adapt<MenuDefinition>();
+        var menuId = await menuRepository.CreateAsync(menu, cancellationToken);
+
+        await menuCacheInvalidator.InvalidateAsync([menu], cancellationToken);
 
         return Result<int>.Created(menuId);
     }
