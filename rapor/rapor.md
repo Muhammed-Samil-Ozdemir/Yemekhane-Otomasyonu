@@ -178,3 +178,95 @@ $ docker compose exec redis redis-cli EXISTS oturum:7520bd51...
 ```
 
 Tarayıcı yalnızca rastgele 64 karakterlik token'ı `HttpOnly` bir çerezde tutar, kullanıcı bilgisi Redis'tedir. Aşama 2'de oturumlar uygulamanın belleğindeydi ve aynı `restart` herkesi çıkışa zorluyordu; değişiklik yalnızca Infrastructure'daki `ISessionService` kaydını `RedisSessionService` yapmaktan ibaret oldu.
+
+## Aşama 4 · Değişiklik talebi
+
+**Yarım porsiyon** (öğle ve akşam, tam fiyatın %60'ı, kahvaltıda yok, geçmiş rezervasyonlar tam) ve **alerjen uyarısı** (kullanıcı profilinden alerjen seçer, menüde bu alerjenleri içeren yemekler işaretlenir).
+
+**Migration: `db/init/04_degisiklik.sql`**
+
+| Değişiklik | Açıklama |
+|---|---|
+| `kullanici_alerjenleri (kullanici_id, alerjen_id)` | Yeni tablo, kullanıcı ile alerjen arasında çoka çok ilişki |
+| `ogunler.yarim_porsiyon_orani DECIMAL(3,2) NULL` | Öğle ve akşam `0.60`, kahvaltı `NULL` (yarım porsiyon yok). Oran veride durur. |
+| `rezervasyonlar.porsiyon ENUM('tam','yarim') DEFAULT 'tam'` | Varsayılan değer sayesinde geçmiş rezervasyonlar tam porsiyon kalır |
+| `sp_rezervasyon_yap(kullanici_id, menu_id, porsiyon)` | Yarım porsiyonda `ROUND(fiyat * oran, 2)`; oranı `NULL` olan öğünde `Bu öğünde yarım porsiyon seçilemez.` Dönen satır aynı: `rezervasyon_id, ucret, bakiye`. İptal `ucret` sütununu iade ettiği için `sp_rezervasyon_iptal` değişmedi. |
+
+Sütunlar `information_schema` kontrolüyle eklendiği için dosya tekrar çalıştırılabilir. `db/init` altında durduğundan sıfırdan kurulumda otomatik çalışır.
+
+**Çalışan sistemde kaynağa uygulama**
+
+```
+mysql> SELECT ... rezervasyon, toplam_ucret, hareket, toplam_bakiye, tutarsiz;     (öncesi)
+|         371 |     16390.00 |     462 |      10022.50 |        0 |
+
+$ docker compose exec -T mysql-primary mysql -uroot -pyemekhane_kok yemekhane < db/init/04_degisiklik.sql
+real    0m1.087s
+
+mysql> (sonrası, aynı sorgu)
+|         371 |     16390.00 |     462 |      10022.50 |        0 |
+mysql> SELECT porsiyon, COUNT(*) FROM rezervasyonlar GROUP BY porsiyon;
+| tam      |      371 |
+mysql> SELECT id, ad, son_saat, yarim_porsiyon_orani FROM ogunler;
+|  1 | Kahvaltı  | 07:00:00 |                 NULL |
+|  2 | Öğle      | 10:00:00 |                 0.60 |
+|  3 | Akşam     | 15:00:00 |                 0.60 |
+```
+
+İkinci kez çalıştırıldığında da hatasız tamamlandı (çıkış kodu 0). Yordamın imzası değiştiği için migration'dan hemen sonra uygulama `docker compose up -d --build uygulama` ile yeni sürüme geçirildi.
+
+**Değişikliğin replikaya geçtiğinin kanıtı** (replikadan, `@@server_id = 2`, `super_read_only = 1`):
+
+```
+$ docker compose exec mysql-replica mysql -uroot -pyemekhane_kok yemekhane -e "SHOW CREATE TABLE rezervasyonlar\G"
+  `durum` enum('aktif','kullanildi','iptal') ... NOT NULL DEFAULT 'aktif',
+  `porsiyon` enum('tam','yarim') COLLATE utf8mb4_tr_0900_ai_ci NOT NULL DEFAULT 'tam',
+  `ucret` decimal(8,2) NOT NULL,
+
+$ docker compose exec mysql-replica mysql -uroot -pyemekhane_kok yemekhane -e "SHOW CREATE TABLE kullanici_alerjenleri\G"
+CREATE TABLE `kullanici_alerjenleri` (
+  `kullanici_id` int unsigned NOT NULL,
+  `alerjen_id` tinyint unsigned NOT NULL,
+  `olusturma` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`kullanici_id`,`alerjen_id`),
+  CONSTRAINT `fk_ka_alerjen` FOREIGN KEY (`alerjen_id`) REFERENCES `alerjenler` (`id`),
+  CONSTRAINT `fk_ka_kullanici` FOREIGN KEY (`kullanici_id`) REFERENCES `kullanicilar` (`id`) ON DELETE CASCADE
+)
+
+$ docker compose exec mysql-replica mysql -uroot -pyemekhane_kok yemekhane -e "SHOW CREATE TABLE ogunler\G"
+  `son_saat` time NOT NULL,
+  `yarim_porsiyon_orani` decimal(3,2) DEFAULT NULL,
+  CONSTRAINT `ck_ogun_yarim_porsiyon` CHECK (((`yarim_porsiyon_orani` is null) or ((`yarim_porsiyon_orani` > 0) and (`yarim_porsiyon_orani` < 1))))
+
+sp_rezervasyon_yap parametreleri (replika): p_kullanici_id int, p_menu_id int, p_porsiyon varchar
+```
+
+**Uygulama ve arayüz.** Haftalık menüde öğle ve akşam için "Tam / Yarım" seçimi, `profil.html` sayfasında alerjen seçimi (`GET`/`PUT /api/profile/allergens`), günün ve haftanın menüsünde uyarı, rezervasyon listesinde porsiyon sütunu eklendi. Uyarılar ve yarım fiyat Application katmanında hesaplanır; arayüz yalnızca gösterir.
+
+```
+$ curl ... "http://localhost:8080/api/menus/daily?cafeteriaId=1&mealId=2&date=2026-11-23"   (alerjenleri: Gluten, Süt)
+fiyat 42.0  yarım 25.2  uyarı ['Gluten', 'Süt']
+   Izgara Köfte   ['Gluten', 'Yumurta']        -> ['Gluten']
+   Fırın Makarna  ['Gluten', 'Süt', 'Yumurta'] -> ['Gluten', 'Süt']
+   Cacık          ['Süt']                      -> ['Süt']
+
+{"menuId":58,"portion":"yarim"}  -> "Bu öğünde yarım porsiyon seçilemez."   (kahvaltı)
+{"menuId":50,"portion":"yarim"}  -> {"amount":25.20,"balance":664.80,"message":"Rezervasyonunuz alındı (yarım porsiyon)."}
+```
+
+![Alerjen uyarısı ve yarım porsiyon fiyatı](ekran/asama4-menu-uyari.png)
+
+![Haftalık menüde porsiyon seçimi](ekran/asama4-haftalik-porsiyon.png)
+
+**Redis'te eski yapıdaki menü kayıtlarının temizlenmesi.** Aşama 3'te önbelleğe yazılan menülerde `HalfPortionRate` alanı yoktu; kalsalardı yeni uygulama gün sonuna kadar yarım porsiyonu göstermezdi. Önbellek yapısına sürüm verildi: uygulama açılırken `surum:menu` anahtarı güncel sürümden farklıysa bütün `menu:*` kayıtlarını `SCAN` ile bulup siler. Oturumlara dokunulmaz.
+
+```
+(yayından önce)  redis-cli --scan --pattern 'menu:*' | wc -l  ->  21,   GET surum:menu  ->  (nil)
+$ docker compose logs uygulama | grep MenuCacheVersion
+23:58:21 info: ...MenuCacheVersionService[0] Menü önbelleği 2. sürüme geçti, eski yapıdaki 21 menü kaydı Redis'ten silindi.
+(yayından sonra) redis-cli --scan --pattern 'menu:*' | wc -l  ->  0,    GET surum:menu  ->  "2"
+```
+
+Sonraki istekte menü yeni yapıyla yazıldı (`"HalfPortionRate":0.60`). Elle temizlik: `docker compose exec redis sh -c "redis-cli --scan --pattern 'menu:*' | xargs -r redis-cli DEL"`.
+
+**Sıfırdan kurulum.** `docker compose down -v && docker compose up -d` sonrası `01_sema.sql`, `02_ornek_veri.sql`, `04_degisiklik.sql` sırayla çalıştı, altı servis `healthy` (replica-setup `Exited (0)`), replikada 13 tablo ve 3 parametreli `sp_rezervasyon_yap` var; ilk yarım porsiyon rezervasyonu başarılı oldu.

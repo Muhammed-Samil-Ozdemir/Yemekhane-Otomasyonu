@@ -21,11 +21,33 @@ const params = new URLSearchParams(location.search);
 let startDate = params.get('hafta');
 
 function renderAction(menu) {
-    if (menu.isReservable) {
-        return `<button type="button" class="dugme dugme-ana" data-menu-id="${menu.id}">Rezerve et</button>`;
+    if (!menu.isReservable) {
+        return `<button type="button" class="dugme" disabled>${escapeHtml(menu.reservationNote ?? 'Rezervasyon kapalı')}</button>`;
     }
 
-    return `<button type="button" class="dugme" disabled>${escapeHtml(menu.reservationNote ?? 'Rezervasyon kapalı')}</button>`;
+    const button = `<button type="button" class="dugme dugme-ana" data-menu-id="${menu.id}">Rezerve et</button>`;
+
+    if (menu.halfPrice === null) {
+        return button;
+    }
+
+    return `
+        <div class="porsiyon-secimi">
+            <label class="gorunmez" for="porsiyon-${menu.id}">Porsiyon</label>
+            <select id="porsiyon-${menu.id}" data-porsiyon="${menu.id}">
+                <option value="tam">Tam · ${formatMoney(menu.price)}</option>
+                <option value="yarim">Yarım · ${formatMoney(menu.halfPrice)}</option>
+            </select>
+            ${button}
+        </div>`;
+}
+
+function renderFoodNames(menu) {
+    return menu.foods
+        .map(food => food.hasAllergenWarning
+            ? `<strong class="uyari-metni" title="${escapeHtml(food.allergenWarnings.join(', '))} içerir">${escapeHtml(food.name)}</strong>`
+            : escapeHtml(food.name))
+        .join(', ');
 }
 
 function renderSlot(slot) {
@@ -43,10 +65,14 @@ function renderSlot(slot) {
         <section class="ogun" aria-label="${escapeHtml(slot.mealName)}">
             <div class="ogun-ust">
                 <h3>${escapeHtml(slot.mealName)}</h3>
-                <strong>${formatMoney(menu.price)}</strong>
+                <div class="etiket-deger">
+                    <strong>${formatMoney(menu.price)}</strong>
+                    ${menu.halfPrice !== null ? `<span class="yarim-fiyat">Yarım ${formatMoney(menu.halfPrice)}</span>` : ''}
+                </div>
             </div>
-            <p class="ogun-yemekler">${menu.foods.map(food => escapeHtml(food.name)).join(', ')}</p>
+            <p class="ogun-yemekler">${renderFoodNames(menu)}</p>
             <div class="cipler">
+                ${menu.hasAllergenWarning ? `<span class="cip cip-hata">Alerjen: ${escapeHtml(menu.allergenWarnings.join(', '))}</span>` : ''}
                 ${menu.isVegetarian ? '<span class="cip cip-basari">Vejetaryen</span>' : ''}
                 <span class="cip">${menu.totalCalories} kcal</span>
                 <span class="cip">${menu.freeSeats ?? '-'} boş yer</span>
@@ -103,8 +129,11 @@ async function reserve(button) {
     setBusy(button, true);
 
     try {
+        const portionSelect = grid.querySelector(`select[data-porsiyon="${button.dataset.menuId}"]`);
+
         const receipt = await api.post('reservations', {
-            menuId: Number(button.dataset.menuId)
+            menuId: Number(button.dataset.menuId),
+            portion: portionSelect?.value ?? 'tam'
         });
 
         updateBalance(receipt.balance);

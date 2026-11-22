@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
 using Yemekhane.Backend.Application.Auth;
 using Yemekhane.Backend.Application.Cache;
+using Yemekhane.Backend.Domain.Allergens;
 using Yemekhane.Backend.Domain.Balances;
 using Yemekhane.Backend.Domain.Cafeterias;
 using Yemekhane.Backend.Domain.Evaluations;
@@ -11,6 +12,7 @@ using Yemekhane.Backend.Domain.Meals;
 using Yemekhane.Backend.Domain.Menus;
 using Yemekhane.Backend.Domain.Reservations;
 using Yemekhane.Backend.Domain.Users;
+using Yemekhane.Backend.Infrastructure.Allergens;
 using Yemekhane.Backend.Infrastructure.Auth;
 using Yemekhane.Backend.Infrastructure.Balances;
 using Yemekhane.Backend.Infrastructure.Cache;
@@ -40,9 +42,11 @@ public static class InfrastructureRegistrar
             ConnectionMultiplexer.Connect(redisOption.ConnectionString));
 
         services.AddSingleton<ICacheService, RedisCacheService>();
+        services.AddHostedService<MenuCacheVersionService>();
         services.AddSingleton<ISessionService, RedisSessionService>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
+        services.AddScoped<IAllergenRepository, AllergenRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ICafeteriaRepository, CafeteriaRepository>();
         services.AddScoped<IMealRepository, MealRepository>();

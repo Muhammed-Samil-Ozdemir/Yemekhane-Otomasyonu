@@ -13,10 +13,16 @@ public sealed class Menu : Entity
     public DateTime ReservationDeadline { get; set; }
     public decimal StudentPrice { get; set; }
     public decimal StaffPrice { get; set; }
+    public decimal? HalfPortionRate { get; set; }
     public List<MenuFood> Foods { get; set; } = [];
 
     public decimal GetPrice(string role) =>
         role == UserRoles.Student ? StudentPrice : StaffPrice;
+
+    public decimal? GetHalfPrice(string role) =>
+        HalfPortionRate is null
+            ? null
+            : Math.Round(GetPrice(role) * HalfPortionRate.Value, 2, MidpointRounding.AwayFromZero);
 
     public int GetTotalCalories() =>
         Foods.Sum(food => food.Calories);

@@ -2,6 +2,7 @@ using MediatR;
 using Yemekhane.Backend.Application.Auth;
 using Yemekhane.Backend.Application.Common;
 using Yemekhane.Backend.Application.Menus.Dtos;
+using Yemekhane.Backend.Domain.Allergens;
 using Yemekhane.Backend.Domain.Menus;
 using Yemekhane.Backend.Domain.Reservations;
 
@@ -16,6 +17,7 @@ internal sealed class GetDailyMenuQueryHandler(
     MenuReader menuReader,
     IMenuRepository menuRepository,
     IReservationRepository reservationRepository,
+    IAllergenRepository allergenRepository,
     IUserContext userContext) : IRequestHandler<GetDailyMenuQuery, Result<MenuDto>>
 {
     public async Task<Result<MenuDto>> Handle(GetDailyMenuQuery request, CancellationToken cancellationToken)
@@ -33,10 +35,13 @@ internal sealed class GetDailyMenuQueryHandler(
         var reservations = await reservationRepository.GetByUserBetweenAsync(
             userContext.UserId, request.CafeteriaId, date.ToDateTime(), date.ToDateTime(), cancellationToken);
 
+        var userAllergens = await allergenRepository.GetUserAllergensAsync(userContext.UserId, cancellationToken);
+
         var result = MenuDtoFactory.Create(
             menu,
             userContext.Role,
             now,
+            userAllergens.Select(allergen => allergen.Name).ToHashSet(),
             occupancies.FirstOrDefault(occupancy => occupancy.MenuId == menu.Id),
             reservations.FirstOrDefault(reservation => reservation.MenuId == menu.Id));
 

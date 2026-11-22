@@ -11,6 +11,7 @@ public sealed class Reservation : Entity
     public string CafeteriaName { get; set; } = default!;
     public DateTime ReservationDeadline { get; set; }
     public string Status { get; set; } = default!;
+    public string Portion { get; set; } = Portions.Full;
     public decimal Price { get; set; }
     public DateTime CreatedAt { get; set; }
 

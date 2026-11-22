@@ -8,5 +8,6 @@ public sealed class Meal : Entity
     public TimeSpan StartTime { get; set; }
     public TimeSpan EndTime { get; set; }
     public TimeSpan ReservationDeadline { get; set; }
+    public decimal? HalfPortionRate { get; set; }
     public int SortOrder { get; set; }
 }

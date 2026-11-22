@@ -10,12 +10,13 @@ public sealed class MealRepository(
     public async Task<List<Meal>> GetAllAsync(CancellationToken cancellationToken)
     {
         const string sql = """
-            SELECT id               AS Id,
-                   ad               AS Name,
-                   servis_baslangic AS StartTime,
-                   servis_bitis     AS EndTime,
-                   son_saat         AS ReservationDeadline,
-                   sira             AS SortOrder
+            SELECT id                   AS Id,
+                   ad                   AS Name,
+                   servis_baslangic     AS StartTime,
+                   servis_bitis         AS EndTime,
+                   son_saat             AS ReservationDeadline,
+                   yarim_porsiyon_orani AS HalfPortionRate,
+                   sira                 AS SortOrder
             FROM ogunler
             ORDER BY sira
             """;

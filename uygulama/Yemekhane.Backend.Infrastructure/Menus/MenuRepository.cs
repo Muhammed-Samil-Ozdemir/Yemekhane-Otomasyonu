@@ -14,27 +14,29 @@ public sealed class MenuRepository(
     public async Task<Menu?> GetAsync(int cafeteriaId, DateTime date, int mealId, CancellationToken cancellationToken)
     {
         const string sql = """
-            SELECT menu_id                AS MenuId,
-                   yemekhane_id           AS CafeteriaId,
-                   yemekhane              AS CafeteriaName,
-                   tarih                  AS Date,
-                   ogun_id                AS MealId,
-                   ogun                   AS MealName,
-                   rezervasyon_son        AS ReservationDeadline,
-                   ogrenci_fiyati         AS StudentPrice,
-                   personel_fiyati        AS StaffPrice,
-                   yemek_id               AS FoodId,
-                   yemek                  AS FoodName,
-                   kategori               AS CategoryName,
-                   kategori_sira          AS CategoryOrder,
-                   kalori                 AS Calories,
-                   vejetaryen             AS IsVegetarian,
-                   alerjenler             AS Allergens
-            FROM v_menu_detay
-            WHERE yemekhane_id = @CafeteriaId
-              AND tarih = @Date
-              AND ogun_id = @MealId
-            ORDER BY kategori_sira, yemek
+            SELECT d.menu_id              AS MenuId,
+                   d.yemekhane_id         AS CafeteriaId,
+                   d.yemekhane            AS CafeteriaName,
+                   d.tarih                AS Date,
+                   d.ogun_id              AS MealId,
+                   d.ogun                 AS MealName,
+                   d.rezervasyon_son      AS ReservationDeadline,
+                   d.ogrenci_fiyati       AS StudentPrice,
+                   d.personel_fiyati      AS StaffPrice,
+                   o.yarim_porsiyon_orani AS HalfPortionRate,
+                   d.yemek_id             AS FoodId,
+                   d.yemek                AS FoodName,
+                   d.kategori             AS CategoryName,
+                   d.kategori_sira        AS CategoryOrder,
+                   d.kalori               AS Calories,
+                   d.vejetaryen           AS IsVegetarian,
+                   d.alerjenler           AS Allergens
+            FROM v_menu_detay d
+                     JOIN ogunler o ON o.id = d.ogun_id
+            WHERE d.yemekhane_id = @CafeteriaId
+              AND d.tarih = @Date
+              AND d.ogun_id = @MealId
+            ORDER BY d.kategori_sira, d.yemek
             """;
 
         await using var connection = await connectionFactory.OpenReplicaAsync(cancellationToken);
@@ -60,6 +62,7 @@ public sealed class MenuRepository(
             ReservationDeadline = first.ReservationDeadline,
             StudentPrice = first.StudentPrice,
             StaffPrice = first.StaffPrice,
+            HalfPortionRate = first.HalfPortionRate,
             Foods = rows.Select(row => new MenuFood
             {
                 FoodId = row.FoodId,

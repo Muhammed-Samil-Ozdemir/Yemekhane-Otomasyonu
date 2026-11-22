@@ -2,7 +2,7 @@ namespace Yemekhane.Backend.Domain.Reservations;
 
 public interface IReservationRepository
 {
-    Task<ReservationReceipt> CreateAsync(int userId, int menuId, CancellationToken cancellationToken);
+    Task<ReservationReceipt> CreateAsync(int userId, int menuId, string portion, CancellationToken cancellationToken);
 
     Task<ReservationReceipt> CancelAsync(int userId, int reservationId, CancellationToken cancellationToken);
 

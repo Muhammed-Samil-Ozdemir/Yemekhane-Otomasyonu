@@ -11,6 +11,7 @@ public sealed class ReservationMappingConfig : IRegister
         config.NewConfig<Reservation, ReservationDto>()
             .Map(dest => dest.Date, src => DateOnly.FromDateTime(src.Date))
             .Map(dest => dest.StatusText, src => ReservationStatuses.GetText(src.Status))
+            .Map(dest => dest.PortionText, src => Portions.GetText(src.Portion))
             .Map(dest => dest.CanCancel, src => src.CanCancel(DateTime.Now));
     }
 }

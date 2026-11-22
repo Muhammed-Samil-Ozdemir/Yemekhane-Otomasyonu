@@ -69,6 +69,7 @@ function renderList() {
                     <th scope="col">Tarih</th>
                     <th scope="col">Öğün</th>
                     <th scope="col">Yemekhane</th>
+                    <th scope="col">Porsiyon</th>
                     <th scope="col" class="sayi">Ücret</th>
                     <th scope="col">Durum</th>
                     <th scope="col">Alındı</th>
@@ -81,6 +82,7 @@ function renderList() {
                         <td data-etiket="Tarih">${formatDate(reservation.date, { day: 'numeric', month: 'long', weekday: 'short' })}</td>
                         <td data-etiket="Öğün">${escapeHtml(reservation.mealName)}</td>
                         <td data-etiket="Yemekhane">${escapeHtml(reservation.cafeteriaName)}</td>
+                        <td data-etiket="Porsiyon">${escapeHtml(reservation.portionText)}</td>
                         <td data-etiket="Ücret" class="sayi">${formatMoney(reservation.price)}</td>
                         <td data-etiket="Durum"><span class="cip ${statusClasses[reservation.status] ?? ''}">${escapeHtml(reservation.statusText)}</span></td>
                         <td data-etiket="Alındı" class="ikincil">${formatDateTime(reservation.createdAt)}</td>

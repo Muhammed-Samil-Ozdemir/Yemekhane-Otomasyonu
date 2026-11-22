@@ -4,6 +4,7 @@ using Yemekhane.Backend.Application.Auth;
 using Yemekhane.Backend.Application.Common;
 using Yemekhane.Backend.Application.Meals.Dtos;
 using Yemekhane.Backend.Application.Menus.Dtos;
+using Yemekhane.Backend.Domain.Allergens;
 using Yemekhane.Backend.Domain.Meals;
 using Yemekhane.Backend.Domain.Menus;
 using Yemekhane.Backend.Domain.Reservations;
@@ -19,6 +20,7 @@ internal sealed class GetWeeklyMenuQueryHandler(
     IMealRepository mealRepository,
     IMenuRepository menuRepository,
     IReservationRepository reservationRepository,
+    IAllergenRepository allergenRepository,
     IUserContext userContext) : IRequestHandler<GetWeeklyMenuQuery, Result<WeeklyMenuDto>>
 {
     private const int DayCount = 7;
@@ -40,6 +42,10 @@ internal sealed class GetWeeklyMenuQueryHandler(
                 userContext.UserId, request.CafeteriaId, startDate.ToDateTime(), endDate.ToDateTime(), cancellationToken))
             .ToDictionary(reservation => reservation.MenuId);
 
+        var userAllergens = (await allergenRepository.GetUserAllergensAsync(userContext.UserId, cancellationToken))
+            .Select(allergen => allergen.Name)
+            .ToHashSet();
+
         var days = new List<WeeklyMenuDayDto>();
 
         for (var date = startDate; date <= endDate; date = date.AddDays(1))
@@ -60,6 +66,7 @@ internal sealed class GetWeeklyMenuQueryHandler(
                             menu,
                             userContext.Role,
                             now,
+                            userAllergens,
                             occupancies.GetValueOrDefault(menu.Id),
                             reservations.GetValueOrDefault(menu.Id))
                 });

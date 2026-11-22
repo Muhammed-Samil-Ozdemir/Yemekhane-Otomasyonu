@@ -23,14 +23,17 @@ function pickCurrentMeal(meals) {
 
 function renderFood(food) {
     const allergens = food.allergens
-        .map(allergen => `<span class="cip">${escapeHtml(allergen)}</span>`)
+        .map(allergen => food.allergenWarnings.includes(allergen)
+            ? `<span class="cip cip-hata" title="Profilinizde seçili alerjen">${escapeHtml(allergen)}</span>`
+            : `<span class="cip">${escapeHtml(allergen)}</span>`)
         .join('');
 
     return `
-        <li class="yemek">
+        <li class="yemek${food.hasAllergenWarning ? ' yemek-uyari' : ''}">
             <div class="yemek-ad">
                 <span class="ust-etiket">${escapeHtml(food.categoryName)}</span>
                 <strong>${escapeHtml(food.name)}</strong>
+                ${food.hasAllergenWarning ? `<span class="uyari-metni">Uyarı: ${escapeHtml(food.allergenWarnings.join(', '))} içerir</span>` : ''}
             </div>
             <div class="yemek-bilgi">
                 ${food.isVegetarian ? '<span class="cip cip-basari">Vejetaryen</span>' : ''}
@@ -57,14 +60,21 @@ function renderMenu(menu) {
                     ${menu.reservationNote ? `<span class="cip">${escapeHtml(menu.reservationNote)}</span>` : ''}
                 </div>
             </div>
+            ${menu.hasAllergenWarning
+                ? `<p class="uyari-kutusu" role="note"><strong>Alerjen uyarısı:</strong> Bu menüde profilinizde seçtiğiniz alerjenler var (${escapeHtml(menu.allergenWarnings.join(', '))}). İlgili yemekler aşağıda işaretlendi.</p>`
+                : ''}
             <dl class="ozet">
                 <div><dt>Toplam kalori</dt><dd>${menu.totalCalories} kcal</dd></div>
                 <div><dt>Fiyatınız</dt><dd>${formatMoney(menu.price)}</dd></div>
+                ${menu.halfPrice !== null ? `<div><dt>Yarım porsiyon</dt><dd>${formatMoney(menu.halfPrice)}</dd></div>` : ''}
                 <div><dt>Boş yer</dt><dd>${menu.freeSeats ?? '-'} / ${menu.capacity ?? '-'}</dd></div>
                 <div><dt>Son rezervasyon</dt><dd>${formatTime(menu.reservationDeadline)}</dd></div>
             </dl>
             <ul class="yemek-listesi">${menu.foods.map(renderFood).join('')}</ul>
-            ${reserveLink}
+            <div class="bolum-baslik">
+                <p class="ikincil">Alerjenlerinizi <a href="profil.html">profil sayfasından</a> seçebilirsiniz.</p>
+                ${reserveLink}
+            </div>
         </article>`;
 }
 

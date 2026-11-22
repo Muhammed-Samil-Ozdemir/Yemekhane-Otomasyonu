@@ -10,12 +10,19 @@ internal static class MenuDtoFactory
         Menu menu,
         string role,
         DateTime now,
+        IReadOnlySet<string> userAllergens,
         MenuOccupancy? occupancy,
         Reservation? reservation)
     {
         var myReservation = reservation is { Status: not ReservationStatuses.Cancelled } ? reservation : null;
         var isOpen = menu.IsReservationOpen(now);
         var hasFreeSeat = occupancy is null || occupancy.FreeSeats > 0;
+
+        var foods = menu.Foods
+            .OrderBy(food => food.CategoryOrder)
+            .ThenBy(food => food.Name)
+            .Select(food => CreateFood(food, userAllergens))
+            .ToList();
 
         return new MenuDto
         {
@@ -27,8 +34,11 @@ internal static class MenuDtoFactory
             MealName = menu.MealName,
             ReservationDeadline = menu.ReservationDeadline,
             Price = menu.GetPrice(role),
+            HalfPrice = menu.GetHalfPrice(role),
             TotalCalories = menu.GetTotalCalories(),
             IsVegetarian = menu.IsVegetarian(),
+            HasAllergenWarning = foods.Any(food => food.HasAllergenWarning),
+            AllergenWarnings = foods.SelectMany(food => food.AllergenWarnings).Distinct().Order().ToList(),
             Capacity = occupancy?.Capacity,
             FreeSeats = occupancy?.FreeSeats,
             IsReservable = isOpen && hasFreeSeat && myReservation is null,
@@ -39,28 +49,37 @@ internal static class MenuDtoFactory
                 {
                     Id = myReservation.Id,
                     Status = myReservation.Status,
-                    StatusText = ReservationStatuses.GetText(myReservation.Status)
+                    StatusText = ReservationStatuses.GetText(myReservation.Status),
+                    Portion = myReservation.Portion,
+                    PortionText = Portions.GetText(myReservation.Portion)
                 },
-            Foods = menu.Foods
-                .OrderBy(food => food.CategoryOrder)
-                .ThenBy(food => food.Name)
-                .Select(food => new MenuFoodDto
-                {
-                    Id = food.FoodId,
-                    Name = food.Name,
-                    CategoryName = food.CategoryName,
-                    Calories = food.Calories,
-                    IsVegetarian = food.IsVegetarian,
-                    Allergens = food.Allergens
-                })
-                .ToList()
+            Foods = foods
+        };
+    }
+
+    private static MenuFoodDto CreateFood(MenuFood food, IReadOnlySet<string> userAllergens)
+    {
+        var warnings = food.Allergens
+            .Where(userAllergens.Contains)
+            .ToList();
+
+        return new MenuFoodDto
+        {
+            Id = food.FoodId,
+            Name = food.Name,
+            CategoryName = food.CategoryName,
+            Calories = food.Calories,
+            IsVegetarian = food.IsVegetarian,
+            Allergens = food.Allergens,
+            AllergenWarnings = warnings,
+            HasAllergenWarning = warnings.Count > 0
         };
     }
 
     private static string? GetReservationNote(Reservation? myReservation, bool isOpen, bool hasFreeSeat)
     {
         if (myReservation is not null)
-            return $"Rezervasyonunuz var ({ReservationStatuses.GetText(myReservation.Status).ToLowerInvariant()})";
+            return $"Rezervasyonunuz var ({Portions.GetText(myReservation.Portion).ToLowerInvariant()})";
 
         if (!isOpen)
             return "Rezervasyon süresi doldu";

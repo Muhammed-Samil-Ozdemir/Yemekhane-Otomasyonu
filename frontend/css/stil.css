@@ -779,6 +779,10 @@ textarea {
     background: var(--c-basari-zemin);
 }
 
+.ogun .cip-hata {
+    background: var(--c-hata-zemin);
+}
+
 .ogun .dugme:disabled {
     flex: 1 1 100%;
     padding: var(--b-c) var(--b-y);
@@ -915,6 +919,64 @@ textarea {
     align-items: center;
     justify-content: space-between;
     gap: var(--b-y);
+}
+
+.gorunmez {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.uyari-kutusu {
+    padding: var(--b-y);
+    border-left: 4px solid var(--c-hata);
+    border-radius: var(--r-ic);
+    background: var(--c-hata-zemin);
+    color: var(--c-yazi);
+}
+
+.uyari-kutusu strong,
+.uyari-metni {
+    color: var(--c-hata);
+    font-weight: 700;
+}
+
+.yemek-uyari {
+    margin: 0 calc(var(--b-c) * -1);
+    padding-left: var(--b-c);
+    padding-right: var(--b-c);
+    border-radius: var(--r-ic);
+    background: var(--c-hata-zemin);
+}
+
+.alerjen-secimi {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 12em), 1fr));
+    gap: 0 var(--b-y);
+}
+
+.porsiyon-secimi {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--b-c);
+}
+
+.porsiyon-secimi select {
+    min-height: var(--dokun);
+    padding: 0 var(--alan-x);
+    background: var(--c-yuzey);
+    border: 1px solid var(--c-cizgi);
+    border-radius: 999px;
+}
+
+.yarim-fiyat {
+    color: var(--c-ikincil);
+    font-size: var(--y-s);
+    font-weight: 600;
 }
 
 .hata-metni {

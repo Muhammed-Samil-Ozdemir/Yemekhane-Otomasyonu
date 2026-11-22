@@ -16,6 +16,7 @@ public sealed class ReservationRepository(
                yh.ad                          AS CafeteriaName,
                TIMESTAMP(m.tarih, o.son_saat) AS ReservationDeadline,
                r.durum                        AS Status,
+               r.porsiyon                     AS Portion,
                r.ucret                        AS Price,
                r.olusturma                    AS CreatedAt
         FROM rezervasyonlar r
@@ -24,13 +25,13 @@ public sealed class ReservationRepository(
                  JOIN yemekhaneler yh ON yh.id = m.yemekhane_id
         """;
 
-    public async Task<ReservationReceipt> CreateAsync(int userId, int menuId, CancellationToken cancellationToken)
+    public async Task<ReservationReceipt> CreateAsync(int userId, int menuId, string portion, CancellationToken cancellationToken)
     {
         await using var connection = await connectionFactory.OpenPrimaryAsync(cancellationToken);
 
         var (reservationId, price, balance) = await connection.CallProcedureAsync<(int, decimal, decimal)>(
-            "CALL sp_rezervasyon_yap(@UserId, @MenuId)",
-            new { UserId = userId, MenuId = menuId },
+            "CALL sp_rezervasyon_yap(@UserId, @MenuId, @Portion)",
+            new { UserId = userId, MenuId = menuId, Portion = portion },
             cancellationToken);
 
         return new ReservationReceipt(reservationId, price, balance);

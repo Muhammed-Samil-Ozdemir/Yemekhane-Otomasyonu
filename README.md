@@ -248,3 +248,7 @@ Docker dışında çalıştırmak için (veritabanları compose ile açıkken) `
 |---|---|---|---|
 | `menu:{yemekhane_id}:{tarih}:{ogun_id}` | Menünün yemekleri, fiyatları, son saati (JSON) | Menünün gününün sonuna kadar | Yönetici menüyü oluşturduğunda ya da değiştirdiğinde |
 | `oturum:{token}` | Oturum sahibinin kimliği ve rolü (JSON) | 30 dakika, her istekte yenilenir | Çıkışta |
+
+### Değişiklik talebi (Aşama 4)
+
+`db/init/04_degisiklik.sql` yarım porsiyon ve alerjen uyarısını ekler: `kullanici_alerjenleri` tablosu, `ogunler.yarim_porsiyon_orani` ve `rezervasyonlar.porsiyon` sütunları, porsiyon parametreli `sp_rezervasyon_yap(kullanici_id, menu_id, porsiyon)`. Dosya tekrar çalıştırılabilir. Arayüzde `profil.html` (alerjen seçimi), haftalık menüde porsiyon seçimi ve menülerde alerjen uyarısı vardır; API'de `GET`/`PUT /api/profile/allergens`. Uygulama açılırken Redis'teki eski yapıdaki `menu:*` kayıtlarını `surum:menu` anahtarına bakarak temizler.

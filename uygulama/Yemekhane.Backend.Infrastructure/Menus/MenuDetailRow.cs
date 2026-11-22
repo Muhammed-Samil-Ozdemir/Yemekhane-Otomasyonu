@@ -11,6 +11,7 @@ internal sealed class MenuDetailRow
     public DateTime ReservationDeadline { get; set; }
     public decimal StudentPrice { get; set; }
     public decimal StaffPrice { get; set; }
+    public decimal? HalfPortionRate { get; set; }
     public int FoodId { get; set; }
     public string FoodName { get; set; } = default!;
     public string CategoryName { get; set; } = default!;

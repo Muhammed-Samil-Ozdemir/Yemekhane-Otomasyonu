@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Profil · Yemekhane</title>
+    <link rel="icon" href="img/ikon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="css/stil.css">
+    <script src="js/tema.js"></script>
+    <script type="module" src="js/profil.js"></script>
+</head>
+<body>
+<div class="sayfa">
+    <header class="ust-bar">
+        <a class="marka" href="menu.html">
+            <img src="img/ikon.svg" alt="" width="36" height="36">
+            <span>Yemekhane</span>
+        </a>
+        <nav class="ana-menu" aria-label="Ana menü">
+            <a href="menu.html">Günün Menüsü</a>
+            <a href="haftalik.html">Haftalık Menü</a>
+            <a href="rezervasyonlarim.html">Rezervasyonlarım</a>
+            <a href="bakiye.html">Bakiye</a>
+            <a href="degerlendirme.html">Değerlendirme</a>
+            <a href="profil.html">Profil</a>
+            <a href="yonetim.html" data-yalniz-yonetici hidden>Yönetim</a>
+        </nav>
+        <div class="kullanici">
+            <a class="cip" href="bakiye.html" id="ust-bakiye" aria-label="Güncel bakiye">…</a>
+            <span class="kullanici-adi" id="ust-kullanici"></span>
+            <button type="button" class="dugme dugme-kare" id="tema-dugmesi" aria-label="Temayı değiştir" title="Temayı değiştir">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg>
+            </button>
+            <button type="button" class="dugme" id="cikis-dugmesi">Çıkış</button>
+        </div>
+    </header>
+
+    <main class="sayfa-icerik">
+        <div class="etiket-deger">
+            <span class="ust-etiket">Hesabım</span>
+            <h1>Profil</h1>
+        </div>
+
+        <div class="iki-sutun">
+            <section class="kart" aria-labelledby="bilgi-baslik">
+                <h2 id="bilgi-baslik">Kişisel bilgiler</h2>
+                <dl class="ozet" id="bilgiler">
+                    <div><dt>Ad soyad</dt><dd>…</dd></div>
+                </dl>
+            </section>
+
+            <section class="kart" aria-labelledby="alerjen-baslik">
+                <form class="form" id="alerjen-formu">
+                    <div class="etiket-deger">
+                        <span class="ust-etiket">Alerjen uyarısı</span>
+                        <h2 id="alerjen-baslik">Alerjenlerim</h2>
+                        <p class="ikincil">Seçtiğiniz alerjenleri içeren yemekler günün menüsünde ve haftalık menüde uyarıyla gösterilir.</p>
+                    </div>
+                    <div class="alerjen-secimi" id="alerjenler" aria-live="polite">
+                        <p class="yukleniyor">Alerjenler yükleniyor…</p>
+                    </div>
+                    <div>
+                        <button type="submit" class="dugme dugme-ana">Kaydet</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </main>
+</div>
+
+<div class="bildirim" id="bildirim" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

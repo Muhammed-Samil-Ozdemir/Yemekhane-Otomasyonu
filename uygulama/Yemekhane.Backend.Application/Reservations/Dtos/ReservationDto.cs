@@ -10,6 +10,8 @@ public sealed record ReservationDto
     public DateTime ReservationDeadline { get; init; }
     public string Status { get; init; } = default!;
     public string StatusText { get; init; } = default!;
+    public string Portion { get; init; } = default!;
+    public string PortionText { get; init; } = default!;
     public decimal Price { get; init; }
     public DateTime CreatedAt { get; init; }
     public bool CanCancel { get; init; }
