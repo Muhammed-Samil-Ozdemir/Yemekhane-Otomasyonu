@@ -1,0 +1,9 @@
+**/bin/
+**/obj/
+**/.idea/
+**/.vs/
+**/.vscode/
+*.user
+*.DotSettings.user
+**/Dockerfile
+**/.dockerignore

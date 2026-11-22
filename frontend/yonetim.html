@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Yönetim · Yemekhane</title>
+    <link rel="icon" href="img/ikon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="css/stil.css">
+    <script src="js/tema.js"></script>
+    <script type="module" src="js/yonetim.js"></script>
+</head>
+<body>
+<div class="sayfa">
+    <header class="ust-bar">
+        <a class="marka" href="menu.html">
+            <img src="img/ikon.svg" alt="" width="36" height="36">
+            <span>Yemekhane</span>
+        </a>
+        <nav class="ana-menu" aria-label="Ana menü">
+            <a href="menu.html">Günün Menüsü</a>
+            <a href="haftalik.html">Haftalık Menü</a>
+            <a href="rezervasyonlarim.html">Rezervasyonlarım</a>
+            <a href="bakiye.html">Bakiye</a>
+            <a href="degerlendirme.html">Değerlendirme</a>
+            <a href="yonetim.html" data-yalniz-yonetici hidden>Yönetim</a>
+        </nav>
+        <div class="kullanici">
+            <a class="cip" href="bakiye.html" id="ust-bakiye" aria-label="Güncel bakiye">…</a>
+            <span class="kullanici-adi" id="ust-kullanici"></span>
+            <button type="button" class="dugme dugme-kare" id="tema-dugmesi" aria-label="Temayı değiştir" title="Temayı değiştir">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg>
+            </button>
+            <button type="button" class="dugme" id="cikis-dugmesi">Çıkış</button>
+        </div>
+    </header>
+
+    <main class="sayfa-icerik">
+        <div class="etiket-deger">
+            <span class="ust-etiket">Yemekhane müdürlüğü</span>
+            <h1>Yönetici Paneli</h1>
+        </div>
+
+        <section class="kart" aria-labelledby="rapor-baslik">
+            <div class="bolum-baslik">
+                <div class="etiket-deger">
+                    <span class="ust-etiket">Replikadan okunur</span>
+                    <h2 id="rapor-baslik">Menü doluluğu ve puanlar</h2>
+                </div>
+            </div>
+            <form class="form-izgara" id="rapor-filtresi">
+                <label class="alan">
+                    <span>Yemekhane</span>
+                    <select name="cafeteriaId"></select>
+                </label>
+                <label class="alan">
+                    <span>Başlangıç</span>
+                    <input type="date" name="startDate">
+                </label>
+                <label class="alan">
+                    <span>Bitiş</span>
+                    <input type="date" name="endDate">
+                </label>
+                <button type="submit" class="dugme dugme-ana">Raporu getir</button>
+            </form>
+            <div class="tablo-sarmal" id="rapor" aria-live="polite">
+                <p class="yukleniyor">Rapor yükleniyor…</p>
+            </div>
+        </section>
+
+        <section class="kart" aria-labelledby="form-baslik" id="menu-bolumu">
+            <form class="form" id="menu-formu" novalidate>
+                <div class="bolum-baslik">
+                    <div class="etiket-deger">
+                        <span class="ust-etiket" id="form-etiket">Yeni menü</span>
+                        <h2 id="form-baslik">Menü oluştur</h2>
+                    </div>
+                    <button type="button" class="dugme" id="yeni-menu" hidden>Yeni menüye geç</button>
+                </div>
+                <div class="form-izgara">
+                    <label class="alan">
+                        <span>Yemekhane</span>
+                        <select name="cafeteriaId"></select>
+                    </label>
+                    <label class="alan">
+                        <span>Tarih</span>
+                        <input type="date" name="date">
+                    </label>
+                    <label class="alan">
+                        <span>Öğün</span>
+                        <select name="mealId"></select>
+                    </label>
+                    <label class="alan">
+                        <span>Öğrenci fiyatı (₺)</span>
+                        <input type="number" name="studentPrice" step="0.01" inputmode="decimal">
+                    </label>
+                    <label class="alan">
+                        <span>Personel fiyatı (₺)</span>
+                        <input type="number" name="staffPrice" step="0.01" inputmode="decimal">
+                    </label>
+                </div>
+                <div class="bolum-baslik">
+                    <h3>Yemekler</h3>
+                    <span class="ikincil" id="secim-ozeti">Seçili yemek yok</span>
+                </div>
+                <div class="yemek-secimi" id="yemek-secimi"></div>
+                <div>
+                    <button type="submit" class="dugme dugme-ana">Menüyü kaydet</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="kart" aria-labelledby="turnike-baslik">
+            <div class="etiket-deger">
+                <span class="ust-etiket">sp_turnike_gecis</span>
+                <h2 id="turnike-baslik">Turnike geçişi</h2>
+                <p class="ikincil">Kart okutma anındaki öğünün aktif rezervasyonunu kullanıldı olarak işaretler. Zaman boş bırakılırsa şu an kullanılır; değerlendirme ekranını denemek için servis saatinden bir an seçilebilir.</p>
+            </div>
+            <form class="form-izgara" id="turnike-formu" novalidate>
+                <label class="alan">
+                    <span>Kullanıcı e-postası</span>
+                    <input type="email" name="email" inputmode="email">
+                </label>
+                <label class="alan">
+                    <span>Yemekhane</span>
+                    <select name="cafeteriaId"></select>
+                </label>
+                <label class="alan">
+                    <span>Zaman (isteğe bağlı)</span>
+                    <input type="datetime-local" name="time">
+                </label>
+                <button type="submit" class="dugme dugme-ana">Geçişi onayla</button>
+            </form>
+        </section>
+    </main>
+</div>
+
+<div class="bildirim" id="bildirim" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

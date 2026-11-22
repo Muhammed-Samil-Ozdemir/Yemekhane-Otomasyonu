@@ -221,3 +221,23 @@ container'ında `TZ=Europe/Istanbul` tanımlıdır. Son saat karşılaştırmas�
 
 **Replikada yeni veri hemen görünmüyor** — Replikasyon eşzamansızdır. Bunun uygulamanızdaki
 etkisini ve çözümünü raporda açıklamanız isteniyor.
+
+---
+
+## Uygulama (Web API)
+
+`uygulama/` klasöründeki ASP.NET Core 10 çözümü dört projeden oluşur: `Domain` (varlıklar, repository arayüzleri), `Application` (MediatR handler'ları, DTO'lar, `Result<T>`), `Infrastructure` (Dapper ile veri katmanı, kaynak/replika bağlantıları), `WebAPI` (controller'lar, oturum doğrulaması). Container içinde 8000 portunu dinler, bağlantı bilgilerini yukarıdaki `DB_*` ortam değişkenlerinden okur. Apache `-D WEBAPI` modundadır.
+
+Arayüz `frontend/` altında düz HTML5, CSS3 ve JavaScript (`fetch`) ile yazıldı: `giris.html`, `menu.html`, `haftalik.html`, `rezervasyonlarim.html`, `bakiye.html`, `degerlendirme.html`, `yonetim.html`. Tarayıcıda: <http://localhost:8080>
+
+| Metot | Yol | İş | Sunucu |
+|---|---|---|---|
+| `POST` | `/api/auth/login`, `/api/auth/logout` | Giriş (bcrypt) ve çıkış | Replika |
+| `GET` | `/api/auth/me`, `/api/cafeterias`, `/api/meals` | Kullanıcı, yemekhaneler, öğünler | Replika |
+| `GET` | `/api/menus/daily`, `/api/menus/weekly` | Günün ve haftanın menüsü, boş yer, rol fiyatı | Replika |
+| `GET`, `POST` | `/api/reservations`, `/api/reservations/{id}/cancel` | Liste; `sp_rezervasyon_yap`, `sp_rezervasyon_iptal` | Replika / Kaynak |
+| `GET`, `POST` | `/api/balance`, `/api/balance/load` | Bakiye ve hareketler; `sp_bakiye_yukle` | Replika / Kaynak |
+| `GET`, `POST` | `/api/evaluations` | Kullanılmış menüler; değerlendirme | Replika / Kaynak |
+| `GET`, `POST`, `PUT` | `/api/admin/menus`, `/api/admin/foods`, `/api/admin/turnstile` | Yönetici raporu, menü oluşturma/düzenleme, `sp_turnike_gecis` | Replika / Kaynak |
+
+Docker dışında çalıştırmak için (veritabanları compose ile açıkken) `cd uygulama && dotnet run --project Yemekhane.Backend.WebAPI`; `appsettings.Development.json` `localhost:3307` ve `localhost:3308` portlarını kullanır.

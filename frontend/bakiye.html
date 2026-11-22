@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bakiye · Yemekhane</title>
+    <link rel="icon" href="img/ikon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="css/stil.css">
+    <script src="js/tema.js"></script>
+    <script type="module" src="js/bakiye.js"></script>
+</head>
+<body>
+<div class="sayfa">
+    <header class="ust-bar">
+        <a class="marka" href="menu.html">
+            <img src="img/ikon.svg" alt="" width="36" height="36">
+            <span>Yemekhane</span>
+        </a>
+        <nav class="ana-menu" aria-label="Ana menü">
+            <a href="menu.html">Günün Menüsü</a>
+            <a href="haftalik.html">Haftalık Menü</a>
+            <a href="rezervasyonlarim.html">Rezervasyonlarım</a>
+            <a href="bakiye.html">Bakiye</a>
+            <a href="degerlendirme.html">Değerlendirme</a>
+            <a href="yonetim.html" data-yalniz-yonetici hidden>Yönetim</a>
+        </nav>
+        <div class="kullanici">
+            <a class="cip" href="bakiye.html" id="ust-bakiye" aria-label="Güncel bakiye">…</a>
+            <span class="kullanici-adi" id="ust-kullanici"></span>
+            <button type="button" class="dugme dugme-kare" id="tema-dugmesi" aria-label="Temayı değiştir" title="Temayı değiştir">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg>
+            </button>
+            <button type="button" class="dugme" id="cikis-dugmesi">Çıkış</button>
+        </div>
+    </header>
+
+    <main class="sayfa-icerik">
+        <div class="etiket-deger">
+            <span class="ust-etiket">Cüzdan</span>
+            <h1>Bakiye</h1>
+        </div>
+
+        <div class="iki-sutun">
+            <section class="kart" aria-labelledby="yukleme-baslik">
+                <div class="etiket-deger">
+                    <span class="ust-etiket">Güncel bakiye</span>
+                    <strong class="buyuk-deger" id="bakiye">…</strong>
+                </div>
+
+                <form class="form" id="yukleme-formu" novalidate>
+                    <h2 id="yukleme-baslik">Bakiye yükle</h2>
+                    <div class="secim-grubu" role="group" aria-label="Hızlı tutar seç">
+                        <button type="button" class="dugme" data-tutar="50">50 ₺</button>
+                        <button type="button" class="dugme" data-tutar="100">100 ₺</button>
+                        <button type="button" class="dugme" data-tutar="200">200 ₺</button>
+                        <button type="button" class="dugme" data-tutar="500">500 ₺</button>
+                    </div>
+                    <label class="alan">
+                        <span>Tutar (₺)</span>
+                        <input type="number" name="amount" step="0.01" inputmode="decimal" placeholder="Örn. 150">
+                    </label>
+                    <button type="submit" class="dugme dugme-ana">Yükle</button>
+                </form>
+            </section>
+
+            <section class="kart" aria-labelledby="hareket-baslik">
+                <div class="bolum-baslik">
+                    <h2 id="hareket-baslik">Hareket geçmişi</h2>
+                    <span class="ikincil">Son 50 hareket</span>
+                </div>
+                <div class="tablo-sarmal" id="hareketler" aria-live="polite">
+                    <p class="yukleniyor">Hareketler yükleniyor…</p>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<div class="bildirim" id="bildirim" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

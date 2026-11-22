@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Giriş · Yemekhane</title>
+    <link rel="icon" href="img/ikon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="css/stil.css">
+    <script src="js/tema.js"></script>
+    <script type="module" src="js/giris.js"></script>
+</head>
+<body>
+<main class="giris-sayfasi">
+    <section class="kart giris-kart" aria-labelledby="giris-baslik">
+        <div class="giris-ust">
+            <span class="marka">
+                <img src="img/ikon.svg" alt="" width="36" height="36">
+                <span>Yemekhane</span>
+            </span>
+            <button type="button" class="dugme dugme-kare" id="tema-dugmesi" aria-label="Temayı değiştir" title="Temayı değiştir">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg>
+            </button>
+        </div>
+
+        <div class="etiket-deger">
+            <span class="ust-etiket">Kampüs yemekhanesi</span>
+            <h1 id="giris-baslik">Giriş yap</h1>
+            <p class="ikincil">Menüyü görmek, rezervasyon yapmak ve bakiyeni yönetmek için kampüs e-posta adresinle giriş yap.</p>
+        </div>
+
+        <form class="form" id="giris-formu" novalidate>
+            <label class="alan">
+                <span>E-posta</span>
+                <input type="email" name="email" autocomplete="username" inputmode="email">
+            </label>
+            <label class="alan">
+                <span>Şifre</span>
+                <input type="password" name="password" autocomplete="current-password">
+            </label>
+            <p class="hata-metni" id="giris-hata" role="alert" hidden></p>
+            <button type="submit" class="dugme dugme-ana dugme-genis">Giriş yap</button>
+        </form>
+    </section>
+</main>
+</body>
+</html>
